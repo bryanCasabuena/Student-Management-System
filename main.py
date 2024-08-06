@@ -17,7 +17,11 @@ class MainWindow(QMainWindow):
         add_student_action = QAction("Add Student", self)                           #Self argument will connect QAction to the actual class
         add_student_action.triggered.connect(self.insert)
         file_menu_item.addAction(add_student_action)
-                
+        
+        delete_student_action = QAction("Delete Student", self)
+        delete_student_action.triggered.connect(self.delete)  
+        file_menu_item.addAction(delete_student_action)
+                      
         about_action = QAction("About", self)                                       #Self argument will connect QAction to the actual class
         help_menu_item.addAction(about_action) 
         about_action.setMenuRole(QAction.MenuRole.NoRole)
@@ -45,14 +49,21 @@ class MainWindow(QMainWindow):
                 self.table.setItem(row_number, column_number, QTableWidgetItem(str(data)))      # Secify row and which column
         connection.close()
     
+    #Instantiate an insert dialogue class
     def insert(self):
         dialog = InsertDialog()
         dialog.exec()
-        
+    
+    #Instantiate an search dialogue class    
     def search(self):
         dialog = SearchDialog()
         dialog.exec()
     
+    #Instantiate a delete dialogue class
+    def delete(self):
+        dialog = DeleteDialogue()
+        dialog.exec()
+        
 class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -97,7 +108,7 @@ class InsertDialog(QDialog):
         connection.commit()
         cursor.close()
         connection.close()
-        ages_calculator.load_data()
+        main_window.load_data()
         
 class SearchDialog(QDialog):
     def __init__(self):
@@ -132,6 +143,43 @@ class SearchDialog(QDialog):
             main_window.table.item(item.row(),1).setSelected(True)
         cursor.close()
         connection.close()
+
+class DeleteDialogue(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Search Student Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+    
+        #Create layout and input widget
+        layout = QVBoxLayout()
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
+        
+        # Create submit button
+        button = QPushButton("Delete")
+        button.clicked.connect(self.delete)
+        layout.addWidget(button)
+        
+        self.setLayout(layout)
+    
+    def delete(self):
+        name = self.student_name.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("DELETE FROM students WHERE name=?" , (name,))
+        result2 = cursor.execute("Select * FROM students")
+        
+        rows = list(result2)
+        print(rows)
+        
+        
+        
+        cursor.close()
+        connection.close()
+   
+
         
 app = QApplication(sys.argv)
 main_window = MainWindow()
